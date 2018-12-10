@@ -382,12 +382,12 @@ namespace Taxi
                                         TaxiRide.FromString, rideClientPool, 100, console,
                                         rideTaskWaitTime, DataFormat.Json);
 
-                var fareTask = ReadData<TaxiFare>(arguments.TripDataFiles,
+                /* var fareTask = ReadData<TaxiFare>(arguments.TripDataFiles,
                     TaxiFare.FromString, fareClientPool, 200, console,
-                    fareTaskWaitTime, DataFormat.Csv);
+                    fareTaskWaitTime, DataFormat.Csv);*/
 
 
-                await Task.WhenAll(rideTask, fareTask, console.WriterTask);
+                await Task.WhenAll(rideTask, console.WriterTask);
                 Console.WriteLine("Data generation complete");
             }
             catch (Exception ex)
