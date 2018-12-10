@@ -1,4 +1,4 @@
-﻿namespace Taxi
+namespace Taxi
 {
     using System;
     using System.Collections.Concurrent;
@@ -98,6 +98,9 @@
             var readTask = Task.Factory.StartNew(
                  async () =>
                  {
+                     var sendTimeStart = DateTime.Now;
+                     var firstHistoricEventTime = DateTime.MinValue;
+
                      // iterate through the path list and act on each file from here on
                      foreach (var path in pathList)
                      {
@@ -125,14 +128,38 @@
                                          {
                                              break;
                                          }
+                                         var parts = line.Split(new char[] { ',' });
+
+                                         var time = DateTime.Parse(parts[3]);
+
+                                         if (firstHistoricEventTime == DateTime.MinValue)
+                                         {
+                                             firstHistoricEventTime = time;
+                                         }
+
+                                         var timePassed = DateTime.Now - firstHistoricEventTime;
+                                         var historicTimePassed = time - firstHistoricEventTime;
+
+                                         if (timePassed < historicTimeDelta)
+                                         {
+                                             // random delay every 10000 messages are buffered ??
+                                             await Task.Delay(historicTimePassed - timePassed)
+                                                 .ConfigureAwait(false);
+                                         }
+
+
                                          await buffer.SendAsync(factory(line, header)).ConfigureAwait(false);
                                          if (++messages % 10000 == 0)
+                                         {
+                                             await console.WriteLine($"Created {messages} records for {typeName}").ConfigureAwait(false);
+                                         }
+                                         /*if (++messages % 10000 == 0)
                                          {
                                              // random delay every 10000 messages are buffered ??
                                              await Task.Delay(random.Next(100, 1000))
                                                  .ConfigureAwait(false);
                                              await console.WriteLine($"Created {messages} records for {typeName}").ConfigureAwait(false);
-                                         }
+                                         }*/
 
                                      }
                                  }
@@ -192,8 +219,16 @@
                         bool sendRideDataFirst) ParseArguments()
         {
 
-            var rideConnectionString = Environment.GetEnvironmentVariable("RIDE_EVENT_HUB");
+            /*var rideConnectionString = Environment.GetEnvironmentVariable("RIDE_EVENT_HUB");
             var fareConnectionString = Environment.GetEnvironmentVariable("FARE_EVENT_HUB");
+            var rideDataFilePath = Environment.GetEnvironmentVariable("RIDE_DATA_FILE_PATH");
+            var numberOfMillisecondsToRun = (int.TryParse(Environment.GetEnvironmentVariable("SECONDS_TO_RUN"), out int outputSecondToRun) ? outputSecondToRun : 0) * 1000;
+            var numberOfMillisecondsToLead = (int.TryParse(Environment.GetEnvironmentVariable("MINUTES_TO_LEAD"), out int outputMinutesToLead) ? outputMinutesToLead : 0) * 60000;
+            var pushRideDataFirst = bool.TryParse(Environment.GetEnvironmentVariable("PUSH_RIDE_DATA_FIRST"), out Boolean outputPushRideDataFirst) ? outputPushRideDataFirst : false;*/
+
+            var rideConnectionString = "Endpoint=sb://forrester-demo-ehns.servicebus.windows.net/;SharedAccessKeyName=taxi-ride-asa-access-policy;SharedAccessKey=zb3Dt0tQXVwEo6Bz0VjVVrRBC2aKccH0UrUv1+NEHEM=;EntityPath=taxi-ride";
+            var fareConnectionString = "Endpoint=sb://forrester-demo-ehns.servicebus.windows.net/;SharedAccessKeyName=taxi-fare-asa-access-policy;SharedAccessKey=n7PF7TdtrDUvJMlXFVFg5mkQ9ez5735nENJGEnDbT2c=;EntityPath=taxi-fare";
+            //var rideDataFilePath = @"C:\Users\sidram\Downloads\reference-architectures-master\reference-architectures-master\data\streaming_asa\DataFile\FOIL2013";
             var rideDataFilePath = Environment.GetEnvironmentVariable("RIDE_DATA_FILE_PATH");
             var numberOfMillisecondsToRun = (int.TryParse(Environment.GetEnvironmentVariable("SECONDS_TO_RUN"), out int outputSecondToRun) ? outputSecondToRun : 0) * 1000;
             var numberOfMillisecondsToLead = (int.TryParse(Environment.GetEnvironmentVariable("MINUTES_TO_LEAD"), out int outputMinutesToLead) ? outputMinutesToLead : 0) * 60000;
@@ -201,7 +236,7 @@
 
             if (string.IsNullOrWhiteSpace(rideConnectionString))
             {
-                throw new ArgumentException("rideConnectionString must be provided");
+                throw new ArgumentException("rideConnectionString must be provided alright");
             }
 
             if (string.IsNullOrWhiteSpace(fareConnectionString))
