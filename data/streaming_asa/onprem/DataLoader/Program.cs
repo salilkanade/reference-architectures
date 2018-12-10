@@ -266,14 +266,14 @@ namespace Taxi
 
             // get only the fare files in order
             var fareDataFiles = Directory.EnumerateFiles(rideDataFilePath)
-                            .Where(p => Path.GetFileNameWithoutExtension(p).Contains("trip_fare"))
-                            .OrderBy(p =>
-                            {
-                                var filename = Path.GetFileNameWithoutExtension(p);
-                                var indexString = filename.Substring(filename.LastIndexOf('_') + 1);
-                                var index = int.TryParse(indexString, out int i) ? i : throw new ArgumentException("tripfare file must be named in format trip_fare_*.zip");
-                                return index;
-                            }).ToArray();
+                                    .Where(p => Path.GetFileNameWithoutExtension(p).Contains("trip_data"))
+                                    .OrderBy(p =>
+                                    {
+                                        var filename = Path.GetFileNameWithoutExtension(p);
+                                        var indexString = filename.Substring(filename.LastIndexOf('_') + 1);
+                                        var index = int.TryParse(indexString, out int i) ? i : throw new ArgumentException("tripdata file must be named in format trip_data_*.zip");
+                                        return index;
+                                    }).ToArray();
 
             if (rideDataFiles.Length == 0)
             {
