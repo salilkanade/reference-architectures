@@ -130,7 +130,7 @@ namespace Taxi
                                          }
                                          var parts = line.Split(new char[] { ',' });
 
-                                         var time = DateTime.Parse(parts[6]);
+                                         var time = DateTime.Parse(parts[5]);
 
                                          if (firstHistoricEventTime == DateTime.MinValue)
                                          {
