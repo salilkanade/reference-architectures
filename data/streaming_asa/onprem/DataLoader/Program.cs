@@ -137,7 +137,7 @@ namespace Taxi
                                              firstHistoricEventTime = time;
                                          }
 
-                                         var timePassed = DateTime.Now - firstHistoricEventTime;
+                                         var timePassed = DateTime.Now - sendTimeStart;
                                          var historicTimePassed = time - firstHistoricEventTime;
 
                                          if (timePassed < historicTimePassed)
