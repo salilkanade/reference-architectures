@@ -66,7 +66,7 @@ namespace Taxi
                     using (var client = pool.GetObject())
                     {
                         return client.Value.SendAsync(new EventData(Encoding.UTF8.GetBytes(
-                            t.GetData(dataFormat))), t.PartitionKey).ContinueWith(
+                            t.GetData(dataFormat)))).ContinueWith(
                                async task =>
                                 {
                                     cts.Cancel();
