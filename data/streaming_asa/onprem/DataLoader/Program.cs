@@ -218,18 +218,7 @@ namespace Taxi
                         int MillisecondsToLead,
                         bool sendRideDataFirst) ParseArguments()
         {
-
-            /*var rideConnectionString = Environment.GetEnvironmentVariable("RIDE_EVENT_HUB");
-            var fareConnectionString = Environment.GetEnvironmentVariable("FARE_EVENT_HUB");
-            var rideDataFilePath = Environment.GetEnvironmentVariable("RIDE_DATA_FILE_PATH");
-            var numberOfMillisecondsToRun = (int.TryParse(Environment.GetEnvironmentVariable("SECONDS_TO_RUN"), out int outputSecondToRun) ? outputSecondToRun : 0) * 1000;
-            var numberOfMillisecondsToLead = (int.TryParse(Environment.GetEnvironmentVariable("MINUTES_TO_LEAD"), out int outputMinutesToLead) ? outputMinutesToLead : 0) * 60000;
-            var pushRideDataFirst = bool.TryParse(Environment.GetEnvironmentVariable("PUSH_RIDE_DATA_FIRST"), out Boolean outputPushRideDataFirst) ? outputPushRideDataFirst : false;*/
-
-            var rideConnectionString = "Endpoint=sb://forrester-demo-ehns.servicebus.windows.net/;SharedAccessKeyName=manage;SharedAccessKey=VQHg/fJT6V/AlWx71JN3m9BPYGg6FGiq1fj5hyshv8U=;EntityPath=taxi-ride-6";
-            //var fareConnectionString = "Endpoint=sb://forrester-demo-ehns.servicebus.windows.net/;SharedAccessKeyName=taxi-fare-asa-access-policy;SharedAccessKey=n7PF7TdtrDUvJMlXFVFg5mkQ9ez5735nENJGEnDbT2c=;EntityPath=taxi-fare";
-            //var rideDataFilePath = @"C:\Users\sidram\Downloads\reference-architectures-master\reference-architectures-master\data\streaming_asa\DataFile\FOIL2013";
-            //var rideConnectionString = Environment.GetEnvironmentVariable("RIDE_EVENT_HUB");
+            var rideConnectionString = Environment.GetEnvironmentVariable("RIDE_EVENT_HUB");
             var fareConnectionString = Environment.GetEnvironmentVariable("FARE_EVENT_HUB");
             var rideDataFilePath = Environment.GetEnvironmentVariable("RIDE_DATA_FILE_PATH");
             var numberOfMillisecondsToRun = (int.TryParse(Environment.GetEnvironmentVariable("SECONDS_TO_RUN"), out int outputSecondToRun) ? outputSecondToRun : 0) * 1000;
