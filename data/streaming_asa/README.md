@@ -1,8 +1,10 @@
 # Stream processing with Azure Stream Analytics
 
-This reference architecture shows an end-to-end stream processing pipeline. The pipeline ingests data from two sources, correlates records in the two streams, and calculates a rolling average across a time window. The results are stored for further analysis.
+This project has a modified version of the simulator to read historical NYC taxi data and adjust it to current timestamp to do real time processing with Azure Stream Analytics.
 
-![](https://docs.microsoft.com/azure/architecture/reference-architectures/data/images/stream-processing-asa/stream-processing-asa.png)
+This reference architecture shows an end-to-end stream processing pipeline. The pipeline ingests data from Trip Data Event Hub (Fare Data is also available if you want to play with it) and performs Geospatial Analytics.
+
+![](https://1drv.ms/u/s!Anul7jITCHl0jIBgA9vP75e4h8dbKw)
 
 For more information about this reference architectures and guidance about best practices, see the article [Stream processing with Azure Stream Analytics](https://docs.microsoft.com/azure/architecture/reference-architectures/data/stream-processing-stream-analytics) on the Azure Architecture Center.
 
