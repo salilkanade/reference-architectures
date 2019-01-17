@@ -146,9 +146,16 @@ namespace Taxi
                                              await Task.Delay(historicTimePassed - timePassed)
                                                  .ConfigureAwait(false);
                                          }
+                                         
+                                         //convert old timestamp to current time
+                                         time = time + (sendTimeStart - firstHistoricEventTime);
+                                         var stringArray = line.Split(',');
+                                         stringArray[5] = time.ToString("yyyy-MM-dd HH:mm:ss");
+                                         string newLine = string.Join(",", stringArray);
 
 
-                                         await buffer.SendAsync(factory(line, header)).ConfigureAwait(false);
+                                         //await buffer.SendAsync(factory(line, header)).ConfigureAwait(false);
+                                         await buffer.SendAsync(factory(newLine, header)).ConfigureAwait(false);
                                          if (++messages % 10000 == 0)
                                          {
                                              await console.WriteLine($"Created {messages} records for {typeName}").ConfigureAwait(false);
