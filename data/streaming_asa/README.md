@@ -4,17 +4,17 @@ This project has a modified version of the simulator to read historical NYC taxi
 
 This reference architecture shows an end-to-end stream processing pipeline. The pipeline ingests data from Trip Data Event Hub (Fare Data is also available if you want to play with it) and performs Geospatial Analytics.
 
-![](https://1drv.ms/u/s!Anul7jITCHl0jIBgA9vP75e4h8dbKw)
-
-For more information about this reference architectures and guidance about best practices, see the article [Stream processing with Azure Stream Analytics](https://docs.microsoft.com/azure/architecture/reference-architectures/data/stream-processing-stream-analytics) on the Azure Architecture Center.
+![](ASA-refarch.jpg)
 
 The deployment uses [Azure Building Blocks](https://github.com/mspnp/template-building-blocks/wiki) (azbb), a command line tool that simplifies deployment of Azure resources.
+
+After following the instructions to get the simulator running, you have to update the query and add new PBI outputs. This is described in the last section of this readme.
 
 ## Deploy the solution 
 
 ### Prerequisites
 
-1. Clone, fork, or download the zip file for this repository.
+1. Clone, fork, or download the zip file for this [repository](https://github.com/sidramadoss/reference-architectures).
 
 2. Install [Azure CLI 2.0](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest).
 
@@ -139,6 +139,7 @@ The directory structure should look like the following:
     MINUTES_TO_LEAD=0
     PUSH_RIDE_DATA_FIRST=false
     ```
+    Note that FARE EVENT HUB is still required by the simulator though it isn't used by the query.
 
 4. Run the following command to build the Docker image.
 
@@ -158,15 +159,56 @@ The directory structure should look like the following:
     docker run -v `pwd`/DataFile:/DataFile --env-file=onprem/main.env dataloader:latest
     ```
 
-The output should look like the following:
+### Update Query for geospatial analytics:
+```--SELECT all relevant fields from TaxiRide Streaming input
+WITH 
+TripData AS (
+    SELECT TRY_CAST(pickupLat AS float) as pickupLat,
+    TRY_CAST(pickupLon AS float) as pickupLon,
+    passengerCount, TripTimeinSeconds, 
+    pickupTime, VendorID
+    FROM TaxiRide timestamp by pickupTime
+    WHERE pickupLat > -90 AND pickupLat < 90 AND pickupLon > -180 AND pickupLon < 180
+),
 
-```
-Created 10000 records for TaxiFare
-Created 10000 records for TaxiRide
-Created 20000 records for TaxiFare
-Created 20000 records for TaxiRide
-Created 30000 records for TaxiFare
-...
-```
+--Calculate distance from drop off point to MSFT store in Times Square
+PickupRegionData AS(
+    SELECT CreatePoint(pickupLat,pickupLon) as pickup,  ST_DISTANCE(CreatePoint(pickupLat,pickupLon) ,CreatePoint(40.762,-73.981)) as distance
+    FROM TripData
+)
 
-Let the program run for at least 5 minutes, which is the window defined in the Stream Analytics query. To verify the Stream Analytics job is running correctly, open the Azure portal and navigate to the Cosmos DB database. Open the **Data Explorer** blade and view the documents. 
+-- # of pickups near MSFT store in times square
+SELECT count(*) as pickups, system.timestamp as timestamps
+INTO pbimsft
+FROM PickupRegionData
+WHERE distance < 500
+Group by hoppingwindow(second,60,5)
+
+--Grouping by regions in Manhattan
+SELECT RegionReferenceData.Name AS countyName, count(*), system.timestamp as timestamps
+INTO pbicounty
+FROM TripData
+JOIN RegionReferenceData ON 
+ST_WITHIN(CreatePoint(TripData.pickupLat, TripData.pickupLon), RegionReferenceData.geometry) = 1
+Group by RegionReferenceData.Name, hoppingwindow(second,60,5)
+
+-- Output to Blob / Data lake aggregated at the minute level. Used for batch processing in Databricks
+SELECT count(*) as NbTrips, avg(passengerCount) as AvgPassenger, avg(TripTimeinSeconds) as TripTimeinSeconds, system.timestamp as timestamps
+INTO DataLake
+FROM TripData Group By VendorId,tumblingwindow(minute,1)
+
+--Compare Traffic with historical values in reference data
+SELECT count(TripData.VendorID) as NbTrips, avg(TripData.passengerCount) as AvgPassenger, avg(TripData.TripTimeinSeconds) as TripTimeinSeconds, System.Timestamp as timestamps, TRY_CAST(HistoricalTrafficData.avgTraffic as bigint) as historicalTraffic
+INTO PBI
+FROM TripData
+JOIN HistoricalTrafficData ON
+datepart(hour,TripData.pickupTime) = TRY_CAST(HistoricalTrafficData.hour as bigint)
+Group By TripData.VendorID, HistoricalTrafficData.avgTraffic, hoppingwindow(second,60,5)
+```
+Links for reference data:
+1. [HistoricalTrafficData](https://forresterdemoblobop.blob.core.windows.net/referencedata/avgtraffic.csv)
+2. [RegionReferenceData](https://forresterdemoblobop.blob.core.windows.net/referencedata/manhattan-ny.json)
+<br>You can copy these two files over to your reference data stores and use it in your ASA job.
+
+Let the program run for around 15 minutes after which you should start seeing output. You can see the output of the Stream Analytics job in a PowerBI dashboard.
+![](ASA-refarch-pbi.jpg)
